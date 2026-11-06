@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>project-chat | Demo workspace | Discord</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#151820;color:#e6e9f1;font:15px/1.65 system-ui,sans-serif}
+    .top{height:56px;background:#1c202a;border-bottom:1px solid #353b4a;display:flex;align-items:center;padding:0 30px;gap:20px}
+    .top strong{font-size:17px}.tag{font-size:12px;background:#2b3348;border:1px solid #556484;color:#c8d6fa;border-radius:30px;padding:2px 12px}
+    aside{position:absolute;top:56px;bottom:0;left:0;width:218px;background:#1c202a;padding:25px 18px;border-right:1px solid #353b4a}
+    aside h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#929bad;margin:0 8px 18px}.nav{padding:8px 12px;border-radius:7px;color:#aeb7ca;margin:6px 0}.selected{background:#333c56;color:#f1f4ff}
+    main{margin:26px 390px 0 248px}.heading{display:flex;align-items:center;gap:10px;border-bottom:1px solid #353b4a;padding-bottom:18px}.heading h1{font-size:21px;margin:0}.heading span{color:#96a2bb}
+    .intro{color:#a2aec4;margin:14px 0 22px;font-size:13px}.date{text-align:center;color:#8e9ab0;font-size:12px;margin:24px 0;display:flex;align-items:center;gap:12px}.date:before,.date:after{content:'';flex:1;height:1px;background:#343d50}
+    ol{list-style:none;padding:0;margin:0}li{position:relative;padding:12px 0 18px 55px}h3{font-size:14px;margin:0 0 3px}.username{color:#b8b4ff}time{font-size:11px;color:#8e9ab0;font-weight:400;margin-left:10px}.avatar{position:absolute;left:0;top:15px;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#47457e;color:#e1dfff;font-size:13px;font-weight:700}.bob{background:#285966;color:#a8edee}.charlie{background:#655039;color:#f6d7ac}
+    .footer{margin-top:32px;border:1px solid #3b455b;background:#202735;color:#b3bfd7;padding:15px;border-radius:8px;font-size:13px}.compose{border:1px solid #3d465a;border-radius:8px;padding:14px;color:#8591a7;margin-top:30px;background:#202632}
+  </style>
+</head>
+<body>
+  <header class="top"><strong>Discord Channel Capture</strong><span class="tag">Demo with fictional messages</span></header>
+  <aside><h2>Demo workspace</h2><div class="nav selected"># project-chat</div><div class="nav"># ideas</div><div class="nav"># resources</div></aside>
+  <main>
+    <div class="heading"><span>#</span><h1>project-chat</h1></div>
+    <p class="intro">A local chat fixture used to demonstrate the capture helper.</p>
+    <div class="date">November 6, 2026</div>
+    <ol data-list-id="chat-messages">
+      <li id="chat-messages-456-1200000000000000001"><span class="avatar">AL</span><h3><span class="username" id="message-username-1200000000000000001">Alice</span><time datetime="2026-11-06T09:00:00Z">09:00</time></h3><div id="message-content-1200000000000000001">Can we save the last part of this discussion as a text file?</div></li>
+      <li id="chat-messages-456-1200000000000000002"><span class="avatar bob">BO</span><h3><span class="username" id="message-username-1200000000000000002">Bob</span><time datetime="2026-11-06T09:01:00Z">09:01</time></h3><div id="message-content-1200000000000000002">Yes. Open the capture bookmark and choose how many messages to keep.</div></li>
+      <li id="chat-messages-456-1200000000000000003"><span class="avatar charlie">CH</span><h3><span class="username" id="message-username-1200000000000000003">Charlie</span><time datetime="2026-11-06T09:02:00Z">09:02</time></h3><div id="message-content-1200000000000000003">TXT will be easy to read. JSON also keeps the message links and metadata.</div></li>
+      <li id="chat-messages-456-1200000000000000004"><span class="avatar">AL</span><h3><span class="username" id="message-username-1200000000000000004">Alice</span><time datetime="2026-11-06T09:03:00Z">09:03</time></h3><div id="message-content-1200000000000000004">Great, I can download the transcript directly to my computer.</div></li>
+    </ol>
+    <div class="footer">Server channels, DMs, and group DMs. Default target: 200 messages.</div>
+    <div class="compose">Fictional demo. No messages are sent.</div>
+  </main>
+</body>
+</html>

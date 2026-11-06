@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discord chat capture setup</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f8;color:#202532;font:16px/1.65 system-ui,sans-serif}main{max-width:760px;margin:60px auto;padding:36px;background:white;border:1px solid #d7dce7;border-radius:16px}h1{font-size:30px;line-height:1.2;margin-top:0}h2{font-size:20px;margin-top:30px}p,li{max-width:650px}li{margin:14px 0}.bookmark{display:inline-block;padding:14px 20px;border-radius:9px;background:#4757c4;color:#fff;text-decoration:none;font-weight:700}.hint{font-size:14px;color:#4f5a70}textarea{width:100%;height:160px;font:12px/1.4 monospace;padding:10px;border:1px solid #bdc5d4;border-radius:6px}button{font:600 14px system-ui;padding:10px 16px;border:1px solid #bdc5d4;border-radius:6px;cursor:pointer}summary{cursor:pointer;font-weight:600}code{background:#eef0f6;padding:2px 5px;border-radius:4px}#feedback{min-height:24px}@media(max-width:800px){main{margin:15px;padding:24px}}
+</style></head><body><main>
+<h1>Save about 200 Discord messages</h1>
+<p>This helper works with Discord server channels, one-to-one DMs, and group DMs. It saves a transcript of the chat you choose to your computer. You can choose fewer messages in its panel.</p>
+<p class="hint"><strong>Updating your existing bookmark?</strong> Remove the old capture bookmark and drag the updated button below onto your bar. Close any existing capture panel before running the updated bookmark.</p>
+<h2>1. Add the capture bookmark</h2>
+<p>Press <strong>Ctrl + Shift + B</strong> to show your browser's favorites or bookmarks bar. Drag this button onto that bar:</p>
+<p><a class="bookmark" id="bookmark" href="javascript:(()%20%3D%3E%20%7B%0A%20%20'use%20strict'%3B%0A%0A%20%20const%20key%20%3D%20'__discordLocalChannelCaptureV1'%3B%0A%20%20const%20match%20%3D%20location.pathname.match(%2F%5E%5C%2Fchannels%5C%2F(%5Cd%2B%7C%40me)%5C%2F(%5Cd%2B)%5C%2F%3F%24%2F)%3B%0A%20%20if%20(!%5B'discord.com'%2C%20'canary.discord.com'%2C%20'ptb.discord.com'%5D.includes(location.hostname)%20%7C%7C%20!match)%20%7B%0A%20%20%20%20alert('Open%20a%20server%20channel%2C%20DM%2C%20or%20group%20DM%20on%20discord.com%2C%20then%20click%20this%20bookmark%20again.')%3B%0A%20%20%20%20return%3B%0A%20%20%7D%0A%20%20if%20(window%5Bkey%5D)%20%7B%0A%20%20%20%20window%5Bkey%5D.show()%3B%0A%20%20%20%20return%3B%0A%20%20%7D%0A%0A%20%20const%20path%20%3D%20location.pathname%3B%0A%20%20const%20guildSegment%20%3D%20match%5B1%5D%3B%0A%20%20const%20isDM%20%3D%20guildSegment%20%3D%3D%3D%20'%40me'%3B%0A%20%20const%20guildId%20%3D%20isDM%20%3F%20null%20%3A%20guildSegment%3B%0A%20%20const%20channelId%20%3D%20match%5B2%5D%3B%0A%20%20const%20channelUrl%20%3D%20%60https%3A%2F%2Fdiscord.com%2Fchannels%2F%24%7BguildSegment%7D%2F%24%7BchannelId%7D%60%3B%0A%20%20const%20channelTitle%20%3D%20document.title.replace(%2F%5E%5C(%5Cd%2B%5C)%5Cs*%2F%2C%20'').replace(%2F%5Cs*%5C%7C%5Cs*Discord%24%2F%2C%20'')%3B%0A%20%20const%20captured%20%3D%20new%20Map()%3B%0A%20%20let%20anchorId%20%3D%20null%3B%0A%20%20let%20target%20%3D%20200%3B%0A%20%20let%20running%20%3D%20false%3B%0A%20%20let%20collectionRun%20%3D%200%3B%0A%20%20let%20closed%20%3D%20false%3B%0A%20%20let%20channelChanged%20%3D%20false%3B%0A%20%20let%20notice%20%3D%20'Start%20at%20the%20bottom%20of%20the%20chat%2C%20then%20collect%20older%20messages.'%3B%0A%20%20let%20scheduled%20%3D%20null%3B%0A%0A%20%20const%20host%20%3D%20document.createElement('div')%3B%0A%20%20host.id%20%3D%20'discord-local-capture-panel'%3B%0A%20%20host.style.cssText%20%3D%20'position%3Afixed%3Btop%3A82px%3Bright%3A20px%3Bz-index%3A2147483647%3Bwidth%3A330px%3Bmax-width%3Acalc(100vw%20-%2040px)%3Bcolor-scheme%3Adark%3B'%3B%0A%20%20const%20shadow%20%3D%20host.attachShadow(%7B%20mode%3A%20'open'%20%7D)%3B%0A%20%20const%20style%20%3D%20document.createElement('style')%3B%0A%20%20style.textContent%20%3D%20%60%0A%20%20%20%20%3Ahost%7Ball%3Ainitial%3Bcolor-scheme%3Adark%7D%20*%7Bbox-sizing%3Aborder-box%7D%0A%20%20%20%20section%7Bfont%3A14px%2F1.45%20system-ui%2Csans-serif%3Bbackground%3A%2320232b%3Bcolor%3A%23f3f4f7%3Bborder%3A1px%20solid%20%23565d6d%3Bborder-radius%3A12px%3Bpadding%3A18px%3Bbox-shadow%3A0%2012px%2042px%20%230009%7D%0A%20%20%20%20h2%7Bfont-size%3A17px%3Bline-height%3A1.3%3Bmargin%3A0%200%205px%7D%20p%7Bmargin%3A8px%200%3Bcolor%3A%23c7cbd5%7D%0A%20%20%20%20.channel%7Bfont-size%3A12px%3Boverflow-wrap%3Aanywhere%3Bmargin-bottom%3A12px%7D%0A%20%20%20%20label%7Bdisplay%3Aflex%3Balign-items%3Acenter%3Bgap%3A8px%3Bmargin%3A12px%200%7D%0A%20%20%20%20input%7Bwidth%3A76px%3Bpadding%3A5px%3Bborder%3A1px%20solid%20%23777f90%3Bborder-radius%3A5px%3Bbackground%3A%2313161c%3Bcolor%3A%23fff%3Bfont%3Ainherit%7D%0A%20%20%20%20output%7Bdisplay%3Ablock%3Bfont-size%3A24px%3Bfont-weight%3A700%3Bmargin%3A10px%200%200%7D%0A%20%20%20%20.status%7Bfont-size%3A12px%3Bmin-height%3A36px%3Bwhite-space%3Apre-line%7D%0A%20%20%20%20button%7Bfont%3A600%2013px%20system-ui%3Bcursor%3Apointer%3Bbackground%3A%233c4352%3Bcolor%3A%23fff%3Bborder%3A1px%20solid%20%23687286%3Bborder-radius%3A6px%3Bpadding%3A9px%2010px%7D%0A%20%20%20%20button%3Adisabled%7Bopacity%3A.5%3Bcursor%3Adefault%7D%20button%3Ahover%3Aenabled%7Bfilter%3Abrightness(1.18)%7D%0A%20%20%20%20.primary%7Bwidth%3A100%25%3Bbackground%3A%234757c4%3Bborder-color%3A%237381e6%3Bmargin%3A6px%200%2010px%7D%0A%20%20%20%20.buttons%7Bdisplay%3Aflex%3Bgap%3A6px%3Bflex-wrap%3Awrap%7D.foot%7Bfont-size%3A11px%3Bmargin%3A12px%200%7D%0A%20%20%20%20.close%7Bbackground%3Atransparent%3Bwidth%3A100%25%3Bpadding%3A5px%3Bcolor%3A%23c7cbd5%7D%0A%20%20%60%3B%0A%20%20shadow.append(style)%3B%0A%20%20const%20panel%20%3D%20document.createElement('section')%3B%0A%20%20shadow.append(panel)%3B%0A%20%20const%20element%20%3D%20(tag%2C%20text%2C%20className)%20%3D%3E%20%7B%0A%20%20%20%20const%20node%20%3D%20document.createElement(tag)%3B%0A%20%20%20%20if%20(text%20!%3D%3D%20undefined)%20node.textContent%20%3D%20text%3B%0A%20%20%20%20if%20(className)%20node.className%20%3D%20className%3B%0A%20%20%20%20return%20node%3B%0A%20%20%7D%3B%0A%20%20panel.append(element('h2'%2C%20isDM%20%3F%20'Capture%20this%20DM'%20%3A%20'Capture%20this%20channel'))%3B%0A%20%20panel.append(element('p'%2C%20channelTitle%20%7C%7C%20%60%24%7BisDM%20%3F%20'DM'%20%3A%20'Channel'%7D%20%24%7BchannelId%7D%60%2C%20'channel'))%3B%0A%20%20const%20label%20%3D%20element('label'%2C%20'Messages%20to%20keep')%3B%0A%20%20const%20limitInput%20%3D%20document.createElement('input')%3B%0A%20%20limitInput.type%20%3D%20'number'%3B%0A%20%20limitInput.min%20%3D%20'1'%3B%0A%20%20limitInput.max%20%3D%20'500'%3B%0A%20%20limitInput.value%20%3D%20String(target)%3B%0A%20%20label.append(limitInput)%3B%0A%20%20panel.append(label)%3B%0A%20%20const%20count%20%3D%20element('output'%2C%20'0%20%2F%20200')%3B%0A%20%20const%20status%20%3D%20element('p'%2C%20notice%2C%20'status')%3B%0A%20%20status.setAttribute('role'%2C%20'status')%3B%0A%20%20panel.append(count%2C%20status)%3B%0A%20%20const%20collectButton%20%3D%20element('button'%2C%20'Collect%20older%20messages'%2C%20'primary')%3B%0A%20%20collectButton.type%20%3D%20'button'%3B%0A%20%20const%20actions%20%3D%20element('div'%2C%20undefined%2C%20'buttons')%3B%0A%20%20const%20textButton%20%3D%20element('button'%2C%20'Download%20.txt')%3B%0A%20%20const%20jsonButton%20%3D%20element('button'%2C%20'Download%20.json')%3B%0A%20%20const%20copyButton%20%3D%20element('button'%2C%20'Copy%20text')%3B%0A%20%20for%20(const%20button%20of%20%5BtextButton%2C%20jsonButton%2C%20copyButton%5D)%20%7B%0A%20%20%20%20button.type%20%3D%20'button'%3B%0A%20%20%20%20actions.append(button)%3B%0A%20%20%7D%0A%20%20const%20closeButton%20%3D%20element('button'%2C%20'Close%20and%20clear%20capture'%2C%20'close')%3B%0A%20%20closeButton.type%20%3D%20'button'%3B%0A%20%20panel.append(collectButton%2C%20actions%2C%0A%20%20%20%20element('p'%2C%20'Captures%20the%20loaded%20chat.%20Files%20and%20media%20are%20saved%20as%20links.%20Download%20before%20refreshing%20or%20leaving%20this%20tab.'%2C%20'foot')%2C%20closeButton)%3B%0A%20%20document.documentElement.append(host)%3B%0A%0A%20%20const%20compareIds%20%3D%20(a%2C%20b)%20%3D%3E%20BigInt(a)%20%3C%20BigInt(b)%20%3F%20-1%20%3A%20BigInt(a)%20%3E%20BigInt(b)%20%3F%201%20%3A%200%3B%0A%20%20const%20ordered%20%3D%20()%20%3D%3E%20Array.from(captured.values()).sort((a%2C%20b)%20%3D%3E%20compareIds(a.id%2C%20b.id))%3B%0A%20%20const%20unknown%20%3D%20'Unknown%20author%20(header%20not%20loaded)'%3B%0A%20%20const%20currentChannel%20%3D%20()%20%3D%3E%20location.pathname%20%3D%3D%3D%20path%3B%0A%0A%20%20function%20render()%20%7B%0A%20%20%20%20count.textContent%20%3D%20%60%24%7Bcaptured.size%7D%20%2F%20%24%7Btarget%7D%60%3B%0A%20%20%20%20status.textContent%20%3D%20notice%3B%0A%20%20%20%20collectButton.textContent%20%3D%20running%20%3F%20'Stop%20collecting'%20%3A%20captured.size%20%3E%3D%20target%20%3F%20'Target%20reached'%20%3A%20'Collect%20older%20messages'%3B%0A%20%20%20%20collectButton.disabled%20%3D%20channelChanged%20%7C%7C%20(!running%20%26%26%20captured.size%20%3E%3D%20target)%3B%0A%20%20%20%20limitInput.disabled%20%3D%20running%20%7C%7C%20channelChanged%3B%0A%20%20%20%20for%20(const%20button%20of%20%5BtextButton%2C%20jsonButton%2C%20copyButton%5D)%20button.disabled%20%3D%20!captured.size%3B%0A%20%20%7D%0A%0A%20%20function%20textOf(node)%20%7B%0A%20%20%20%20if%20(!node)%20return%20''%3B%0A%20%20%20%20const%20blocks%20%3D%20new%20Set(%5B'DIV'%2C%20'P'%2C%20'PRE'%2C%20'BLOCKQUOTE'%2C%20'LI'%2C%20'H1'%2C%20'H2'%2C%20'H3'%2C%20'H4'%5D)%3B%0A%20%20%20%20function%20walk(part)%20%7B%0A%20%20%20%20%20%20if%20(part.nodeType%20%3D%3D%3D%20Node.TEXT_NODE)%20return%20part.textContent%3B%0A%20%20%20%20%20%20if%20(part.nodeType%20!%3D%3D%20Node.ELEMENT_NODE%20%7C%7C%20part.hidden%20%7C%7C%20part.getAttribute('aria-hidden')%20%3D%3D%3D%20'true')%20return%20''%3B%0A%20%20%20%20%20%20if%20(%5B'SCRIPT'%2C%20'STYLE'%2C%20'BUTTON'%5D.includes(part.tagName))%20return%20''%3B%0A%20%20%20%20%20%20if%20(part.tagName%20%3D%3D%3D%20'BR')%20return%20'%5Cn'%3B%0A%20%20%20%20%20%20if%20(part.tagName%20%3D%3D%3D%20'IMG')%20return%20part.getAttribute('alt')%20%7C%7C%20''%3B%0A%20%20%20%20%20%20const%20content%20%3D%20Array.from(part.childNodes%2C%20walk).join('')%3B%0A%20%20%20%20%20%20return%20blocks.has(part.tagName)%20%3F%20%60%5Cn%24%7Bcontent%7D%5Cn%60%20%3A%20content%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20walk(node).replace(%2F%5Cu200b%2Fg%2C%20'').replace(%2F%5Cu00a0%2Fg%2C%20'%20').replace(%2F%5Cn%7B3%2C%7D%2Fg%2C%20'%5Cn%5Cn').trim()%3B%0A%20%20%7D%0A%0A%20%20function%20messageId(row)%20%7B%0A%20%20%20%20const%20parts%20%3D%20row.id.match(%2F%5Echat-messages-(%3F%3A(%5Cd%2B)-)%3F(%5Cd%2B)%24%2F)%3B%0A%20%20%20%20return%20parts%20%26%26%20(!parts%5B1%5D%20%7C%7C%20parts%5B1%5D%20%3D%3D%3D%20channelId)%20%3F%20parts%5B2%5D%20%3A%20null%3B%0A%20%20%7D%0A%0A%20%20function%20chatList()%20%7B%0A%20%20%20%20for%20(const%20list%20of%20document.querySelectorAll('%5Bdata-list-id%3D%22chat-messages%22%5D'))%20%7B%0A%20%20%20%20%20%20if%20(Array.from(list.querySelectorAll('%5Bid%5E%3D%22chat-messages-%22%5D')).some(row%20%3D%3E%20messageId(row)))%20return%20list%3B%0A%20%20%20%20%7D%0A%20%20%20%20for%20(const%20row%20of%20document.querySelectorAll('li%5Bid%5E%3D%22chat-messages-%22%5D'))%20%7B%0A%20%20%20%20%20%20if%20(messageId(row))%20return%20row.closest('ol%2C%5Brole%3D%22log%22%5D%2C%5Brole%3D%22list%22%5D')%20%7C%7C%20row.parentElement%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20null%3B%0A%20%20%7D%0A%0A%20%20function%20trim()%20%7B%0A%20%20%20%20const%20entries%20%3D%20ordered()%3B%0A%20%20%20%20for%20(const%20entry%20of%20entries.slice(0%2C%20Math.max(0%2C%20entries.length%20-%20target)))%20captured.delete(entry.id)%3B%0A%20%20%7D%0A%0A%20%20function%20scan()%20%7B%0A%20%20%20%20if%20(closed%20%7C%7C%20!currentChannel()%20%7C%7C%20channelChanged)%20return%3B%0A%20%20%20%20const%20list%20%3D%20chatList()%3B%0A%20%20%20%20if%20(!list)%20return%3B%0A%20%20%20%20const%20rows%20%3D%20Array.from(list.querySelectorAll('%5Bid%5E%3D%22chat-messages-%22%5D'))%0A%20%20%20%20%20%20.map(row%20%3D%3E%20(%7B%20row%2C%20id%3A%20messageId(row)%20%7D)).filter(item%20%3D%3E%20item.id)%0A%20%20%20%20%20%20.sort((a%2C%20b)%20%3D%3E%20compareIds(a.id%2C%20b.id))%3B%0A%20%20%20%20if%20(!rows.length)%20return%3B%0A%20%20%20%20if%20(anchorId%20%3D%3D%3D%20null)%20anchorId%20%3D%20rows%5Brows.length%20-%201%5D.id%3B%0A%20%20%20%20let%20previousAuthor%20%3D%20null%3B%0A%20%20%20%20for%20(const%20%7B%20row%2C%20id%20%7D%20of%20rows)%20%7B%0A%20%20%20%20%20%20const%20content%20%3D%20row.querySelector(%60%5Bid%3D%22message-content-%24%7Bid%7D%22%5D%60)%3B%0A%20%20%20%20%20%20const%20username%20%3D%20row.querySelector(%60%5Bid%3D%22message-username-%24%7Bid%7D%22%5D%60)%0A%20%20%20%20%20%20%20%20%7C%7C%20row.querySelector('h3%20%5Bclass*%3D%22username%22%5D')%3B%0A%20%20%20%20%20%20const%20explicitAuthor%20%3D%20textOf(username%20%26%26%20(username.querySelector('%5Bclass*%3D%22username%22%5D')%20%7C%7C%20username))%3B%0A%20%20%20%20%20%20const%20existing%20%3D%20captured.get(id)%3B%0A%20%20%20%20%20%20let%20author%20%3D%20explicitAuthor%20%7C%7C%20(existing%20%26%26%20existing.author%20!%3D%3D%20unknown%20%3F%20existing.author%20%3A%20null)%20%7C%7C%20previousAuthor%20%7C%7C%20unknown%3B%0A%20%20%20%20%20%20const%20system%20%3D%20!content%20%26%26%20!username%20%26%26%20!!row.querySelector('%5Bclass*%3D%22systemMessage%22%5D%2C%5Bclass*%3D%22systemMessageContent%22%5D')%3B%0A%20%20%20%20%20%20if%20(system)%20author%20%3D%20'System'%3B%0A%20%20%20%20%20%20previousAuthor%20%3D%20system%20%3F%20null%20%3A%20author%20%3D%3D%3D%20unknown%20%3F%20null%20%3A%20author%3B%0A%20%20%20%20%20%20if%20(compareIds(id%2C%20anchorId)%20%3E%200)%20continue%3B%0A%20%20%20%20%20%20const%20time%20%3D%20row.querySelector('time%5Bdatetime%5D')%3B%0A%20%20%20%20%20%20const%20timestamp%20%3D%20time%20%3F%20time.getAttribute('datetime')%20%3A%20new%20Date(Number((BigInt(id)%20%3E%3E%2022n)%20%2B%201420070400000n)).toISOString()%3B%0A%20%20%20%20%20%20const%20text%20%3D%20textOf(content)%20%7C%7C%20(system%20%3F%20textOf(row.querySelector('%5Bclass*%3D%22systemMessageContent%22%5D')%20%7C%7C%20row)%20%3A%20'')%3B%0A%20%20%20%20%20%20const%20embedSelector%20%3D%20'%5Bclass*%3D%22embedWrapper%22%5D%2C%5Bclass*%3D%22embedFull%22%5D'%3B%0A%20%20%20%20%20%20const%20embeds%20%3D%20Array.from(row.querySelectorAll(embedSelector))%0A%20%20%20%20%20%20%20%20.filter(node%20%3D%3E%20!node.parentElement.closest(embedSelector)%20%26%26%20!node.closest('%5Bclass*%3D%22repliedMessage%22%5D'))%0A%20%20%20%20%20%20%20%20.map(textOf).filter(Boolean)%3B%0A%20%20%20%20%20%20const%20attachments%20%3D%20new%20Set()%3B%0A%20%20%20%20%20%20for%20(const%20node%20of%20row.querySelectorAll('a%5Bhref%5D%2Cimg%5Bsrc%5D%2Cvideo%5Bsrc%5D%2Caudio%5Bsrc%5D%2Csource%5Bsrc%5D'))%20%7B%0A%20%20%20%20%20%20%20%20if%20(node.closest('%5Bclass*%3D%22repliedMessage%22%5D'))%20continue%3B%0A%20%20%20%20%20%20%20%20const%20link%20%3D%20node.getAttribute('href')%20%7C%7C%20node.getAttribute('src')%3B%0A%20%20%20%20%20%20%20%20if%20(!link)%20continue%3B%0A%20%20%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20%20%20const%20url%20%3D%20new%20URL(link%2C%20location.origin)%3B%0A%20%20%20%20%20%20%20%20%20%20if%20(%5B'cdn.discordapp.com'%2C%20'media.discordapp.net'%2C%20'cdn.discord.com'%5D.includes(url.hostname)%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%26%26%20%2F%5E%5C%2F(attachments%7Cephemeral-attachments%7Cstickers)%5C%2F%2F.test(url.pathname))%20attachments.add(url.href)%3B%0A%20%20%20%20%20%20%20%20%7D%20catch%20%7B%20%2F*%20Ignore%20malformed%20non-message%20URLs.%20*%2F%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20captured.set(id%2C%20%7B%0A%20%20%20%20%20%20%20%20id%2C%20author%2C%20timestamp%2C%20text%2C%0A%20%20%20%20%20%20%20%20embeds%3A%20Array.from(new%20Set(embeds))%2C%20attachments%3A%20Array.from(attachments)%2C%0A%20%20%20%20%20%20%20%20url%3A%20%60%24%7BchannelUrl%7D%2F%24%7Bid%7D%60%2C%0A%20%20%20%20%20%20%20%20...(text%20%7C%7C%20embeds.length%20%7C%7C%20attachments.size%20%3F%20%7B%7D%20%3A%20%7B%20note%3A%20'No%20readable%20text%20or%20attachment%20link%20was%20found%20for%20this%20message.'%20%7D)%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%7D%0A%20%20%20%20trim()%3B%0A%20%20%20%20if%20(captured.size%20%3E%3D%20target%20%26%26%20running)%20%7B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20notice%20%3D%20%60Captured%20%24%7Bcaptured.size%7D%20messages.%20Ready%20to%20download.%60%3B%0A%20%20%20%20%7D%0A%20%20%20%20render()%3B%0A%20%20%7D%0A%0A%20%20function%20scrollerFor(list)%20%7B%0A%20%20%20%20for%20(let%20node%20%3D%20list%3B%20node%20%26%26%20node%20!%3D%3D%20document.documentElement%3B%20node%20%3D%20node.parentElement)%20%7B%0A%20%20%20%20%20%20const%20overflow%20%3D%20getComputedStyle(node).overflowY%3B%0A%20%20%20%20%20%20if%20(node.clientHeight%20%3E%200%20%26%26%20node.scrollHeight%20%3E%20node.clientHeight%20%2B%205%20%26%26%20%2Fauto%7Cscroll%2F.test(overflow))%20return%20node%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20null%3B%0A%20%20%7D%0A%0A%20%20const%20sleep%20%3D%20milliseconds%20%3D%3E%20new%20Promise(resolve%20%3D%3E%20setTimeout(resolve%2C%20milliseconds))%3B%0A%20%20async%20function%20collectOlder()%20%7B%0A%20%20%20%20if%20(running)%20%7B%0A%20%20%20%20%20%20collectionRun%2B%2B%3B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20notice%20%3D%20'Stopped.%20You%20can%20download%20the%20messages%20collected%20so%20far.'%3B%0A%20%20%20%20%20%20render()%3B%0A%20%20%20%20%20%20return%3B%0A%20%20%20%20%7D%0A%20%20%20%20scan()%3B%0A%20%20%20%20if%20(captured.size%20%3E%3D%20target%20%7C%7C%20!currentChannel())%20return%3B%0A%20%20%20%20running%20%3D%20true%3B%0A%20%20%20%20const%20thisRun%20%3D%20%2B%2BcollectionRun%3B%0A%20%20%20%20notice%20%3D%20'Loading%20older%20messages.%20You%20can%20stop%20at%20any%20time.'%3B%0A%20%20%20%20render()%3B%0A%20%20%20%20let%20stalled%20%3D%200%3B%0A%20%20%20%20for%20(let%20step%20%3D%200%3B%20running%20%26%26%20thisRun%20%3D%3D%3D%20collectionRun%20%26%26%20!closed%20%26%26%20currentChannel()%20%26%26%20step%20%3C%20240%3B%20step%2B%2B)%20%7B%0A%20%20%20%20%20%20const%20list%20%3D%20chatList()%3B%0A%20%20%20%20%20%20const%20scroller%20%3D%20list%20%26%26%20scrollerFor(list)%3B%0A%20%20%20%20%20%20if%20(!scroller)%20%7B%0A%20%20%20%20%20%20%20%20notice%20%3D%20'Scroll%20upward%20in%20the%20chat%20to%20load%20messages.%20They%20will%20be%20captured%20as%20they%20appear.'%3B%0A%20%20%20%20%20%20%20%20break%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20const%20beforeCount%20%3D%20captured.size%3B%0A%20%20%20%20%20%20const%20beforeTop%20%3D%20scroller.scrollTop%3B%0A%20%20%20%20%20%20scroller.scrollBy(%7B%20top%3A%20-Math.max(250%2C%20scroller.clientHeight%20*%200.7)%2C%20behavior%3A%20'instant'%20%7D)%3B%0A%20%20%20%20%20%20await%20sleep(950)%3B%0A%20%20%20%20%20%20if%20(thisRun%20!%3D%3D%20collectionRun)%20return%3B%0A%20%20%20%20%20%20if%20(!running%20%7C%7C%20closed%20%7C%7C%20!currentChannel())%20break%3B%0A%20%20%20%20%20%20scan()%3B%0A%20%20%20%20%20%20if%20(captured.size%20!%3D%3D%20beforeCount%20%7C%7C%20Math.abs(scroller.scrollTop%20-%20beforeTop)%20%3E%201)%20stalled%20%3D%200%3B%0A%20%20%20%20%20%20else%20stalled%2B%2B%3B%0A%20%20%20%20%20%20if%20(stalled%20%3E%3D%208)%20%7B%0A%20%20%20%20%20%20%20%20notice%20%3D%20%60Stopped%20at%20%24%7Bcaptured.size%7D%20messages.%20No%20older%20messages%20loaded%3B%20try%20scrolling%20upward%20manually.%60%3B%0A%20%20%20%20%20%20%20%20break%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20if%20(running)%20%7B%0A%20%20%20%20%20%20notice%20%3D%20captured.size%20%3E%3D%20target%20%3F%20%60Captured%20%24%7Bcaptured.size%7D%20messages.%20Ready%20to%20download.%60%20%3A%20notice%3B%0A%20%20%20%20%20%20if%20(notice.startsWith('Loading%20older'))%20notice%20%3D%20'Collection%20paused.%20Download%20what%20was%20captured%20or%20continue%20scrolling%20upward.'%3B%0A%20%20%20%20%7D%0A%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20render()%3B%0A%20%20%7D%0A%0A%20%20function%20packageData()%20%7B%0A%20%20%20%20scan()%3B%0A%20%20%20%20const%20messages%20%3D%20ordered()%3B%0A%20%20%20%20return%20%7B%0A%20%20%20%20%20%20channel%3A%20%7B%20title%3A%20channelTitle%2C%20type%3A%20isDM%20%3F%20'dm'%20%3A%20'server_channel'%2C%20guild_id%3A%20guildId%2C%20channel_id%3A%20channelId%2C%20url%3A%20channelUrl%20%7D%2C%0A%20%20%20%20%20%20exported_at%3A%20new%20Date().toISOString()%2C%0A%20%20%20%20%20%20requested_messages%3A%20target%2C%0A%20%20%20%20%20%20captured_messages%3A%20messages.length%2C%0A%20%20%20%20%20%20target_reached%3A%20messages.length%20%3E%3D%20target%2C%0A%20%20%20%20%20%20scope%3A%20'Messages%20rendered%20by%20the%20Discord%20web%20app%20at%20or%20before%20the%20newest%20message%20loaded%20when%20capture%20started.%20This%20is%20not%20proof%20of%20complete%20conversation%20history.'%2C%0A%20%20%20%20%20%20notes%3A%20'Attachments%20are%20links%2C%20not%20downloaded%20files.%20Deleted%2C%20inaccessible%2C%20and%20unloaded%20messages%20are%20not%20available.%20Review%20unknown%20authors%20and%20blank%20messages.'%2C%0A%20%20%20%20%20%20messages%0A%20%20%20%20%7D%3B%0A%20%20%7D%0A%0A%20%20function%20transcript()%20%7B%0A%20%20%20%20const%20data%20%3D%20packageData()%3B%0A%20%20%20%20const%20header%20%3D%20%5Bdata.channel.title%2C%20data.channel.url%2C%0A%20%20%20%20%20%20%60Exported%3A%20%24%7Bdata.exported_at%7D%60%2C%20%60Captured%3A%20%24%7Bdata.captured_messages%7D%20%2F%20%24%7Bdata.requested_messages%7D%20requested%20messages%60%2C%0A%20%20%20%20%20%20data.scope%2C%20data.notes%5D.join('%5Cn')%3B%0A%20%20%20%20const%20body%20%3D%20data.messages.map(message%20%3D%3E%20%5B%0A%20%20%20%20%20%20%60%5B%24%7Bmessage.timestamp%7D%5D%20%24%7Bmessage.author%7D%60%2C%0A%20%20%20%20%20%20message.text%2C%0A%20%20%20%20%20%20...message.embeds.map(embed%20%3D%3E%20%60Embed%3A%5Cn%24%7Bembed%7D%60)%2C%0A%20%20%20%20%20%20...message.attachments.map(link%20%3D%3E%20%60Attachment%3A%20%24%7Blink%7D%60)%2C%0A%20%20%20%20%20%20message.note%20%7C%7C%20''%2C%0A%20%20%20%20%20%20message.url%0A%20%20%20%20%5D.filter(Boolean).join('%5Cn')).join('%5Cn%5Cn')%3B%0A%20%20%20%20return%20%60%24%7Bheader%7D%5Cn%5Cn%24%7Bbody%7D%5Cn%60%3B%0A%20%20%7D%0A%0A%20%20function%20download(content%2C%20extension%2C%20mime)%20%7B%0A%20%20%20%20const%20url%20%3D%20URL.createObjectURL(new%20Blob(%5Bcontent%5D%2C%20%7B%20type%3A%20mime%20%7D))%3B%0A%20%20%20%20const%20link%20%3D%20document.createElement('a')%3B%0A%20%20%20%20link.href%20%3D%20url%3B%0A%20%20%20%20link.download%20%3D%20%60discord-%24%7BisDM%20%3F%20'dm'%20%3A%20'channel'%7D-%24%7BchannelId%7D-%24%7Bnew%20Date().toISOString().slice(0%2C%2010)%7D.%24%7Bextension%7D%60%3B%0A%20%20%20%20document.documentElement.append(link)%3B%0A%20%20%20%20link.click()%3B%0A%20%20%20%20link.remove()%3B%0A%20%20%20%20setTimeout(()%20%3D%3E%20URL.revokeObjectURL(url)%2C%2030000)%3B%0A%20%20%20%20notice%20%3D%20%60Download%20started.%20%24%7Bcaptured.size%7D%20messages%20in%20the%20file.%60%3B%0A%20%20%20%20render()%3B%0A%20%20%7D%0A%0A%20%20limitInput.addEventListener('change'%2C%20()%20%3D%3E%20%7B%0A%20%20%20%20target%20%3D%20Math.min(500%2C%20Math.max(1%2C%20Math.trunc(Number(limitInput.value))%20%7C%7C%20200))%3B%0A%20%20%20%20limitInput.value%20%3D%20String(target)%3B%0A%20%20%20%20trim()%3B%0A%20%20%20%20notice%20%3D%20captured.size%20%3E%3D%20target%20%3F%20'Target%20reached.%20Ready%20to%20download.'%20%3A%20'Collect%20older%20messages%20or%20scroll%20upward%20manually.'%3B%0A%20%20%20%20scan()%3B%0A%20%20%20%20render()%3B%0A%20%20%7D)%3B%0A%20%20collectButton.addEventListener('click'%2C%20()%20%3D%3E%20%7B%0A%20%20%20%20collectOlder().catch(()%20%3D%3E%20%7B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20notice%20%3D%20'Automatic%20scrolling%20stopped.%20Scroll%20upward%20manually%2C%20then%20download%20the%20captured%20messages.'%3B%0A%20%20%20%20%20%20render()%3B%0A%20%20%20%20%7D)%3B%0A%20%20%7D)%3B%0A%20%20textButton.addEventListener('click'%2C%20()%20%3D%3E%20download(transcript()%2C%20'txt'%2C%20'text%2Fplain%3Bcharset%3Dutf-8'))%3B%0A%20%20jsonButton.addEventListener('click'%2C%20()%20%3D%3E%20download(JSON.stringify(packageData()%2C%20null%2C%202)%2C%20'json'%2C%20'application%2Fjson'))%3B%0A%20%20copyButton.addEventListener('click'%2C%20async%20()%20%3D%3E%20%7B%0A%20%20%20%20try%20%7B%0A%20%20%20%20%20%20await%20navigator.clipboard.writeText(transcript())%3B%0A%20%20%20%20%20%20notice%20%3D%20'Transcript%20copied.%20Paste%20it%20into%20your%20text%20editor%20or%20another%20app.'%3B%0A%20%20%20%20%7D%20catch%20%7B%0A%20%20%20%20%20%20notice%20%3D%20'Clipboard%20access%20was%20blocked.%20Use%20Download%20.txt%20instead.'%3B%0A%20%20%20%20%7D%0A%20%20%20%20render()%3B%0A%20%20%7D)%3B%0A%0A%20%20const%20observer%20%3D%20new%20MutationObserver(()%20%3D%3E%20%7B%0A%20%20%20%20if%20(scheduled%20!%3D%3D%20null%20%7C%7C%20closed%20%7C%7C%20channelChanged)%20return%3B%0A%20%20%20%20scheduled%20%3D%20setTimeout(()%20%3D%3E%20%7B%20scheduled%20%3D%20null%3B%20scan()%3B%20%7D%2C%20100)%3B%0A%20%20%7D)%3B%0A%20%20observer.observe(document.body%2C%20%7B%20childList%3A%20true%2C%20subtree%3A%20true%2C%20characterData%3A%20true%20%7D)%3B%0A%20%20const%20timer%20%3D%20setInterval(()%20%3D%3E%20%7B%0A%20%20%20%20if%20(!currentChannel()%20%26%26%20!channelChanged)%20%7B%0A%20%20%20%20%20%20channelChanged%20%3D%20true%3B%0A%20%20%20%20%20%20collectionRun%2B%2B%3B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20observer.disconnect()%3B%0A%20%20%20%20%20%20notice%20%3D%20'Chat%20changed.%20Capture%20stopped%3B%20downloads%20still%20contain%20only%20the%20original%20chat.%20Close%20and%20run%20the%20bookmark%20again%20for%20another%20chat.'%3B%0A%20%20%20%20%20%20render()%3B%0A%20%20%20%20%7D%20else%20if%20(!channelChanged)%20scan()%3B%0A%20%20%7D%2C%201200)%3B%0A%20%20window%5Bkey%5D%20%3D%20%7B%20show%3A%20()%20%3D%3E%20%7B%20host.style.display%20%3D%20'block'%3B%20%7D%20%7D%3B%0A%20%20closeButton.addEventListener('click'%2C%20()%20%3D%3E%20%7B%0A%20%20%20%20if%20(captured.size%20%26%26%20!confirm('Close%20the%20helper%20and%20clear%20its%20captured%20messages%3F%20Download%20first%20if%20you%20want%20to%20keep%20them.'))%20return%3B%0A%20%20%20%20closed%20%3D%20true%3B%0A%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20observer.disconnect()%3B%0A%20%20%20%20clearInterval(timer)%3B%0A%20%20%20%20if%20(scheduled%20!%3D%3D%20null)%20clearTimeout(scheduled)%3B%0A%20%20%20%20captured.clear()%3B%0A%20%20%20%20host.remove()%3B%0A%20%20%20%20delete%20window%5Bkey%5D%3B%0A%20%20%7D)%3B%0A%20%20scan()%3B%0A%20%20render()%3B%0A%7D)()%3B%0A%0Avoid%200%3B">Capture Discord chat</a></p>
+<p class="hint">Drag it to the browser bar above the page. Clicking it on this setup page does not capture Discord.</p>
+<h2>2. Open your chat in Discord</h2>
+<p>Go to <a href="https://discord.com/channels/@me" target="_blank" rel="noopener">Discord in your browser</a>, log in normally, and open the server channel, DM, or group DM you want. Open the actual conversation, rather than the Friends page. Scroll to the bottom to start with the newest messages. You can also start from an older part of the chat.</p>
+<h2>3. Capture and download</h2>
+<ol>
+<li>While viewing the Discord chat, click the <strong>Capture Discord chat</strong> bookmark you added.</li>
+<li>A small panel appears. Leave the target at <strong>200</strong> or choose a smaller number, then click <strong>Collect older messages</strong>. Keep the Discord tab open while it scrolls.</li>
+<li>Click <strong>Download .txt</strong>. The filename starts with <code>discord-channel-</code> for a server channel or <code>discord-dm-</code> for a DM or group DM. Open the file in a text editor, or use <strong>Copy text</strong> and paste the transcript into another app.</li>
+</ol>
+<p>If automatic scrolling stops early, scroll upward inside the chat yourself. The counter updates as messages load. You can download fewer than 200 whenever you have enough.</p>
+<p class="hint">The helper reads messages from all participants loaded in this one chat. It does not read passwords, cookies, or account tokens, make API calls, post messages, or send the transcript anywhere. Attachments are saved as links. Edited messages reflect what the page shows during capture. Deleted or inaccessible messages cannot be captured. Download before refreshing the page.</p>
+<details><summary>If dragging a bookmark does not work</summary>
+<p>Create a bookmark with <strong>Ctrl + D</strong>. Name it <strong>Capture Discord chat</strong> and save it to the bookmarks bar. Open its <strong>Edit</strong> option, replace the URL with the complete text below, and save. Then click that bookmark while viewing your Discord chat.</p>
+<button id="copy-bookmark" type="button">Copy bookmark URL</button><p id="feedback" class="hint" role="status"></p>
+<textarea id="bookmark-url" readonly spellcheck="false" aria-label="Bookmark URL">javascript:(()%20%3D%3E%20%7B%0A%20%20'use%20strict'%3B%0A%0A%20%20const%20key%20%3D%20'__discordLocalChannelCaptureV1'%3B%0A%20%20const%20match%20%3D%20location.pathname.match(%2F%5E%5C%2Fchannels%5C%2F(%5Cd%2B%7C%40me)%5C%2F(%5Cd%2B)%5C%2F%3F%24%2F)%3B%0A%20%20if%20(!%5B'discord.com'%2C%20'canary.discord.com'%2C%20'ptb.discord.com'%5D.includes(location.hostname)%20%7C%7C%20!match)%20%7B%0A%20%20%20%20alert('Open%20a%20server%20channel%2C%20DM%2C%20or%20group%20DM%20on%20discord.com%2C%20then%20click%20this%20bookmark%20again.')%3B%0A%20%20%20%20return%3B%0A%20%20%7D%0A%20%20if%20(window%5Bkey%5D)%20%7B%0A%20%20%20%20window%5Bkey%5D.show()%3B%0A%20%20%20%20return%3B%0A%20%20%7D%0A%0A%20%20const%20path%20%3D%20location.pathname%3B%0A%20%20const%20guildSegment%20%3D%20match%5B1%5D%3B%0A%20%20const%20isDM%20%3D%20guildSegment%20%3D%3D%3D%20'%40me'%3B%0A%20%20const%20guildId%20%3D%20isDM%20%3F%20null%20%3A%20guildSegment%3B%0A%20%20const%20channelId%20%3D%20match%5B2%5D%3B%0A%20%20const%20channelUrl%20%3D%20%60https%3A%2F%2Fdiscord.com%2Fchannels%2F%24%7BguildSegment%7D%2F%24%7BchannelId%7D%60%3B%0A%20%20const%20channelTitle%20%3D%20document.title.replace(%2F%5E%5C(%5Cd%2B%5C)%5Cs*%2F%2C%20'').replace(%2F%5Cs*%5C%7C%5Cs*Discord%24%2F%2C%20'')%3B%0A%20%20const%20captured%20%3D%20new%20Map()%3B%0A%20%20let%20anchorId%20%3D%20null%3B%0A%20%20let%20target%20%3D%20200%3B%0A%20%20let%20running%20%3D%20false%3B%0A%20%20let%20collectionRun%20%3D%200%3B%0A%20%20let%20closed%20%3D%20false%3B%0A%20%20let%20channelChanged%20%3D%20false%3B%0A%20%20let%20notice%20%3D%20'Start%20at%20the%20bottom%20of%20the%20chat%2C%20then%20collect%20older%20messages.'%3B%0A%20%20let%20scheduled%20%3D%20null%3B%0A%0A%20%20const%20host%20%3D%20document.createElement('div')%3B%0A%20%20host.id%20%3D%20'discord-local-capture-panel'%3B%0A%20%20host.style.cssText%20%3D%20'position%3Afixed%3Btop%3A82px%3Bright%3A20px%3Bz-index%3A2147483647%3Bwidth%3A330px%3Bmax-width%3Acalc(100vw%20-%2040px)%3Bcolor-scheme%3Adark%3B'%3B%0A%20%20const%20shadow%20%3D%20host.attachShadow(%7B%20mode%3A%20'open'%20%7D)%3B%0A%20%20const%20style%20%3D%20document.createElement('style')%3B%0A%20%20style.textContent%20%3D%20%60%0A%20%20%20%20%3Ahost%7Ball%3Ainitial%3Bcolor-scheme%3Adark%7D%20*%7Bbox-sizing%3Aborder-box%7D%0A%20%20%20%20section%7Bfont%3A14px%2F1.45%20system-ui%2Csans-serif%3Bbackground%3A%2320232b%3Bcolor%3A%23f3f4f7%3Bborder%3A1px%20solid%20%23565d6d%3Bborder-radius%3A12px%3Bpadding%3A18px%3Bbox-shadow%3A0%2012px%2042px%20%230009%7D%0A%20%20%20%20h2%7Bfont-size%3A17px%3Bline-height%3A1.3%3Bmargin%3A0%200%205px%7D%20p%7Bmargin%3A8px%200%3Bcolor%3A%23c7cbd5%7D%0A%20%20%20%20.channel%7Bfont-size%3A12px%3Boverflow-wrap%3Aanywhere%3Bmargin-bottom%3A12px%7D%0A%20%20%20%20label%7Bdisplay%3Aflex%3Balign-items%3Acenter%3Bgap%3A8px%3Bmargin%3A12px%200%7D%0A%20%20%20%20input%7Bwidth%3A76px%3Bpadding%3A5px%3Bborder%3A1px%20solid%20%23777f90%3Bborder-radius%3A5px%3Bbackground%3A%2313161c%3Bcolor%3A%23fff%3Bfont%3Ainherit%7D%0A%20%20%20%20output%7Bdisplay%3Ablock%3Bfont-size%3A24px%3Bfont-weight%3A700%3Bmargin%3A10px%200%200%7D%0A%20%20%20%20.status%7Bfont-size%3A12px%3Bmin-height%3A36px%3Bwhite-space%3Apre-line%7D%0A%20%20%20%20button%7Bfont%3A600%2013px%20system-ui%3Bcursor%3Apointer%3Bbackground%3A%233c4352%3Bcolor%3A%23fff%3Bborder%3A1px%20solid%20%23687286%3Bborder-radius%3A6px%3Bpadding%3A9px%2010px%7D%0A%20%20%20%20button%3Adisabled%7Bopacity%3A.5%3Bcursor%3Adefault%7D%20button%3Ahover%3Aenabled%7Bfilter%3Abrightness(1.18)%7D%0A%20%20%20%20.primary%7Bwidth%3A100%25%3Bbackground%3A%234757c4%3Bborder-color%3A%237381e6%3Bmargin%3A6px%200%2010px%7D%0A%20%20%20%20.buttons%7Bdisplay%3Aflex%3Bgap%3A6px%3Bflex-wrap%3Awrap%7D.foot%7Bfont-size%3A11px%3Bmargin%3A12px%200%7D%0A%20%20%20%20.close%7Bbackground%3Atransparent%3Bwidth%3A100%25%3Bpadding%3A5px%3Bcolor%3A%23c7cbd5%7D%0A%20%20%60%3B%0A%20%20shadow.append(style)%3B%0A%20%20const%20panel%20%3D%20document.createElement('section')%3B%0A%20%20shadow.append(panel)%3B%0A%20%20const%20element%20%3D%20(tag%2C%20text%2C%20className)%20%3D%3E%20%7B%0A%20%20%20%20const%20node%20%3D%20document.createElement(tag)%3B%0A%20%20%20%20if%20(text%20!%3D%3D%20undefined)%20node.textContent%20%3D%20text%3B%0A%20%20%20%20if%20(className)%20node.className%20%3D%20className%3B%0A%20%20%20%20return%20node%3B%0A%20%20%7D%3B%0A%20%20panel.append(element('h2'%2C%20isDM%20%3F%20'Capture%20this%20DM'%20%3A%20'Capture%20this%20channel'))%3B%0A%20%20panel.append(element('p'%2C%20channelTitle%20%7C%7C%20%60%24%7BisDM%20%3F%20'DM'%20%3A%20'Channel'%7D%20%24%7BchannelId%7D%60%2C%20'channel'))%3B%0A%20%20const%20label%20%3D%20element('label'%2C%20'Messages%20to%20keep')%3B%0A%20%20const%20limitInput%20%3D%20document.createElement('input')%3B%0A%20%20limitInput.type%20%3D%20'number'%3B%0A%20%20limitInput.min%20%3D%20'1'%3B%0A%20%20limitInput.max%20%3D%20'500'%3B%0A%20%20limitInput.value%20%3D%20String(target)%3B%0A%20%20label.append(limitInput)%3B%0A%20%20panel.append(label)%3B%0A%20%20const%20count%20%3D%20element('output'%2C%20'0%20%2F%20200')%3B%0A%20%20const%20status%20%3D%20element('p'%2C%20notice%2C%20'status')%3B%0A%20%20status.setAttribute('role'%2C%20'status')%3B%0A%20%20panel.append(count%2C%20status)%3B%0A%20%20const%20collectButton%20%3D%20element('button'%2C%20'Collect%20older%20messages'%2C%20'primary')%3B%0A%20%20collectButton.type%20%3D%20'button'%3B%0A%20%20const%20actions%20%3D%20element('div'%2C%20undefined%2C%20'buttons')%3B%0A%20%20const%20textButton%20%3D%20element('button'%2C%20'Download%20.txt')%3B%0A%20%20const%20jsonButton%20%3D%20element('button'%2C%20'Download%20.json')%3B%0A%20%20const%20copyButton%20%3D%20element('button'%2C%20'Copy%20text')%3B%0A%20%20for%20(const%20button%20of%20%5BtextButton%2C%20jsonButton%2C%20copyButton%5D)%20%7B%0A%20%20%20%20button.type%20%3D%20'button'%3B%0A%20%20%20%20actions.append(button)%3B%0A%20%20%7D%0A%20%20const%20closeButton%20%3D%20element('button'%2C%20'Close%20and%20clear%20capture'%2C%20'close')%3B%0A%20%20closeButton.type%20%3D%20'button'%3B%0A%20%20panel.append(collectButton%2C%20actions%2C%0A%20%20%20%20element('p'%2C%20'Captures%20the%20loaded%20chat.%20Files%20and%20media%20are%20saved%20as%20links.%20Download%20before%20refreshing%20or%20leaving%20this%20tab.'%2C%20'foot')%2C%20closeButton)%3B%0A%20%20document.documentElement.append(host)%3B%0A%0A%20%20const%20compareIds%20%3D%20(a%2C%20b)%20%3D%3E%20BigInt(a)%20%3C%20BigInt(b)%20%3F%20-1%20%3A%20BigInt(a)%20%3E%20BigInt(b)%20%3F%201%20%3A%200%3B%0A%20%20const%20ordered%20%3D%20()%20%3D%3E%20Array.from(captured.values()).sort((a%2C%20b)%20%3D%3E%20compareIds(a.id%2C%20b.id))%3B%0A%20%20const%20unknown%20%3D%20'Unknown%20author%20(header%20not%20loaded)'%3B%0A%20%20const%20currentChannel%20%3D%20()%20%3D%3E%20location.pathname%20%3D%3D%3D%20path%3B%0A%0A%20%20function%20render()%20%7B%0A%20%20%20%20count.textContent%20%3D%20%60%24%7Bcaptured.size%7D%20%2F%20%24%7Btarget%7D%60%3B%0A%20%20%20%20status.textContent%20%3D%20notice%3B%0A%20%20%20%20collectButton.textContent%20%3D%20running%20%3F%20'Stop%20collecting'%20%3A%20captured.size%20%3E%3D%20target%20%3F%20'Target%20reached'%20%3A%20'Collect%20older%20messages'%3B%0A%20%20%20%20collectButton.disabled%20%3D%20channelChanged%20%7C%7C%20(!running%20%26%26%20captured.size%20%3E%3D%20target)%3B%0A%20%20%20%20limitInput.disabled%20%3D%20running%20%7C%7C%20channelChanged%3B%0A%20%20%20%20for%20(const%20button%20of%20%5BtextButton%2C%20jsonButton%2C%20copyButton%5D)%20button.disabled%20%3D%20!captured.size%3B%0A%20%20%7D%0A%0A%20%20function%20textOf(node)%20%7B%0A%20%20%20%20if%20(!node)%20return%20''%3B%0A%20%20%20%20const%20blocks%20%3D%20new%20Set(%5B'DIV'%2C%20'P'%2C%20'PRE'%2C%20'BLOCKQUOTE'%2C%20'LI'%2C%20'H1'%2C%20'H2'%2C%20'H3'%2C%20'H4'%5D)%3B%0A%20%20%20%20function%20walk(part)%20%7B%0A%20%20%20%20%20%20if%20(part.nodeType%20%3D%3D%3D%20Node.TEXT_NODE)%20return%20part.textContent%3B%0A%20%20%20%20%20%20if%20(part.nodeType%20!%3D%3D%20Node.ELEMENT_NODE%20%7C%7C%20part.hidden%20%7C%7C%20part.getAttribute('aria-hidden')%20%3D%3D%3D%20'true')%20return%20''%3B%0A%20%20%20%20%20%20if%20(%5B'SCRIPT'%2C%20'STYLE'%2C%20'BUTTON'%5D.includes(part.tagName))%20return%20''%3B%0A%20%20%20%20%20%20if%20(part.tagName%20%3D%3D%3D%20'BR')%20return%20'%5Cn'%3B%0A%20%20%20%20%20%20if%20(part.tagName%20%3D%3D%3D%20'IMG')%20return%20part.getAttribute('alt')%20%7C%7C%20''%3B%0A%20%20%20%20%20%20const%20content%20%3D%20Array.from(part.childNodes%2C%20walk).join('')%3B%0A%20%20%20%20%20%20return%20blocks.has(part.tagName)%20%3F%20%60%5Cn%24%7Bcontent%7D%5Cn%60%20%3A%20content%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20walk(node).replace(%2F%5Cu200b%2Fg%2C%20'').replace(%2F%5Cu00a0%2Fg%2C%20'%20').replace(%2F%5Cn%7B3%2C%7D%2Fg%2C%20'%5Cn%5Cn').trim()%3B%0A%20%20%7D%0A%0A%20%20function%20messageId(row)%20%7B%0A%20%20%20%20const%20parts%20%3D%20row.id.match(%2F%5Echat-messages-(%3F%3A(%5Cd%2B)-)%3F(%5Cd%2B)%24%2F)%3B%0A%20%20%20%20return%20parts%20%26%26%20(!parts%5B1%5D%20%7C%7C%20parts%5B1%5D%20%3D%3D%3D%20channelId)%20%3F%20parts%5B2%5D%20%3A%20null%3B%0A%20%20%7D%0A%0A%20%20function%20chatList()%20%7B%0A%20%20%20%20for%20(const%20list%20of%20document.querySelectorAll('%5Bdata-list-id%3D%22chat-messages%22%5D'))%20%7B%0A%20%20%20%20%20%20if%20(Array.from(list.querySelectorAll('%5Bid%5E%3D%22chat-messages-%22%5D')).some(row%20%3D%3E%20messageId(row)))%20return%20list%3B%0A%20%20%20%20%7D%0A%20%20%20%20for%20(const%20row%20of%20document.querySelectorAll('li%5Bid%5E%3D%22chat-messages-%22%5D'))%20%7B%0A%20%20%20%20%20%20if%20(messageId(row))%20return%20row.closest('ol%2C%5Brole%3D%22log%22%5D%2C%5Brole%3D%22list%22%5D')%20%7C%7C%20row.parentElement%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20null%3B%0A%20%20%7D%0A%0A%20%20function%20trim()%20%7B%0A%20%20%20%20const%20entries%20%3D%20ordered()%3B%0A%20%20%20%20for%20(const%20entry%20of%20entries.slice(0%2C%20Math.max(0%2C%20entries.length%20-%20target)))%20captured.delete(entry.id)%3B%0A%20%20%7D%0A%0A%20%20function%20scan()%20%7B%0A%20%20%20%20if%20(closed%20%7C%7C%20!currentChannel()%20%7C%7C%20channelChanged)%20return%3B%0A%20%20%20%20const%20list%20%3D%20chatList()%3B%0A%20%20%20%20if%20(!list)%20return%3B%0A%20%20%20%20const%20rows%20%3D%20Array.from(list.querySelectorAll('%5Bid%5E%3D%22chat-messages-%22%5D'))%0A%20%20%20%20%20%20.map(row%20%3D%3E%20(%7B%20row%2C%20id%3A%20messageId(row)%20%7D)).filter(item%20%3D%3E%20item.id)%0A%20%20%20%20%20%20.sort((a%2C%20b)%20%3D%3E%20compareIds(a.id%2C%20b.id))%3B%0A%20%20%20%20if%20(!rows.length)%20return%3B%0A%20%20%20%20if%20(anchorId%20%3D%3D%3D%20null)%20anchorId%20%3D%20rows%5Brows.length%20-%201%5D.id%3B%0A%20%20%20%20let%20previousAuthor%20%3D%20null%3B%0A%20%20%20%20for%20(const%20%7B%20row%2C%20id%20%7D%20of%20rows)%20%7B%0A%20%20%20%20%20%20const%20content%20%3D%20row.querySelector(%60%5Bid%3D%22message-content-%24%7Bid%7D%22%5D%60)%3B%0A%20%20%20%20%20%20const%20username%20%3D%20row.querySelector(%60%5Bid%3D%22message-username-%24%7Bid%7D%22%5D%60)%0A%20%20%20%20%20%20%20%20%7C%7C%20row.querySelector('h3%20%5Bclass*%3D%22username%22%5D')%3B%0A%20%20%20%20%20%20const%20explicitAuthor%20%3D%20textOf(username%20%26%26%20(username.querySelector('%5Bclass*%3D%22username%22%5D')%20%7C%7C%20username))%3B%0A%20%20%20%20%20%20const%20existing%20%3D%20captured.get(id)%3B%0A%20%20%20%20%20%20let%20author%20%3D%20explicitAuthor%20%7C%7C%20(existing%20%26%26%20existing.author%20!%3D%3D%20unknown%20%3F%20existing.author%20%3A%20null)%20%7C%7C%20previousAuthor%20%7C%7C%20unknown%3B%0A%20%20%20%20%20%20const%20system%20%3D%20!content%20%26%26%20!username%20%26%26%20!!row.querySelector('%5Bclass*%3D%22systemMessage%22%5D%2C%5Bclass*%3D%22systemMessageContent%22%5D')%3B%0A%20%20%20%20%20%20if%20(system)%20author%20%3D%20'System'%3B%0A%20%20%20%20%20%20previousAuthor%20%3D%20system%20%3F%20null%20%3A%20author%20%3D%3D%3D%20unknown%20%3F%20null%20%3A%20author%3B%0A%20%20%20%20%20%20if%20(compareIds(id%2C%20anchorId)%20%3E%200)%20continue%3B%0A%20%20%20%20%20%20const%20time%20%3D%20row.querySelector('time%5Bdatetime%5D')%3B%0A%20%20%20%20%20%20const%20timestamp%20%3D%20time%20%3F%20time.getAttribute('datetime')%20%3A%20new%20Date(Number((BigInt(id)%20%3E%3E%2022n)%20%2B%201420070400000n)).toISOString()%3B%0A%20%20%20%20%20%20const%20text%20%3D%20textOf(content)%20%7C%7C%20(system%20%3F%20textOf(row.querySelector('%5Bclass*%3D%22systemMessageContent%22%5D')%20%7C%7C%20row)%20%3A%20'')%3B%0A%20%20%20%20%20%20const%20embedSelector%20%3D%20'%5Bclass*%3D%22embedWrapper%22%5D%2C%5Bclass*%3D%22embedFull%22%5D'%3B%0A%20%20%20%20%20%20const%20embeds%20%3D%20Array.from(row.querySelectorAll(embedSelector))%0A%20%20%20%20%20%20%20%20.filter(node%20%3D%3E%20!node.parentElement.closest(embedSelector)%20%26%26%20!node.closest('%5Bclass*%3D%22repliedMessage%22%5D'))%0A%20%20%20%20%20%20%20%20.map(textOf).filter(Boolean)%3B%0A%20%20%20%20%20%20const%20attachments%20%3D%20new%20Set()%3B%0A%20%20%20%20%20%20for%20(const%20node%20of%20row.querySelectorAll('a%5Bhref%5D%2Cimg%5Bsrc%5D%2Cvideo%5Bsrc%5D%2Caudio%5Bsrc%5D%2Csource%5Bsrc%5D'))%20%7B%0A%20%20%20%20%20%20%20%20if%20(node.closest('%5Bclass*%3D%22repliedMessage%22%5D'))%20continue%3B%0A%20%20%20%20%20%20%20%20const%20link%20%3D%20node.getAttribute('href')%20%7C%7C%20node.getAttribute('src')%3B%0A%20%20%20%20%20%20%20%20if%20(!link)%20continue%3B%0A%20%20%20%20%20%20%20%20try%20%7B%0A%20%20%20%20%20%20%20%20%20%20const%20url%20%3D%20new%20URL(link%2C%20location.origin)%3B%0A%20%20%20%20%20%20%20%20%20%20if%20(%5B'cdn.discordapp.com'%2C%20'media.discordapp.net'%2C%20'cdn.discord.com'%5D.includes(url.hostname)%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%26%26%20%2F%5E%5C%2F(attachments%7Cephemeral-attachments%7Cstickers)%5C%2F%2F.test(url.pathname))%20attachments.add(url.href)%3B%0A%20%20%20%20%20%20%20%20%7D%20catch%20%7B%20%2F*%20Ignore%20malformed%20non-message%20URLs.%20*%2F%20%7D%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20captured.set(id%2C%20%7B%0A%20%20%20%20%20%20%20%20id%2C%20author%2C%20timestamp%2C%20text%2C%0A%20%20%20%20%20%20%20%20embeds%3A%20Array.from(new%20Set(embeds))%2C%20attachments%3A%20Array.from(attachments)%2C%0A%20%20%20%20%20%20%20%20url%3A%20%60%24%7BchannelUrl%7D%2F%24%7Bid%7D%60%2C%0A%20%20%20%20%20%20%20%20...(text%20%7C%7C%20embeds.length%20%7C%7C%20attachments.size%20%3F%20%7B%7D%20%3A%20%7B%20note%3A%20'No%20readable%20text%20or%20attachment%20link%20was%20found%20for%20this%20message.'%20%7D)%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%7D%0A%20%20%20%20trim()%3B%0A%20%20%20%20if%20(captured.size%20%3E%3D%20target%20%26%26%20running)%20%7B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20notice%20%3D%20%60Captured%20%24%7Bcaptured.size%7D%20messages.%20Ready%20to%20download.%60%3B%0A%20%20%20%20%7D%0A%20%20%20%20render()%3B%0A%20%20%7D%0A%0A%20%20function%20scrollerFor(list)%20%7B%0A%20%20%20%20for%20(let%20node%20%3D%20list%3B%20node%20%26%26%20node%20!%3D%3D%20document.documentElement%3B%20node%20%3D%20node.parentElement)%20%7B%0A%20%20%20%20%20%20const%20overflow%20%3D%20getComputedStyle(node).overflowY%3B%0A%20%20%20%20%20%20if%20(node.clientHeight%20%3E%200%20%26%26%20node.scrollHeight%20%3E%20node.clientHeight%20%2B%205%20%26%26%20%2Fauto%7Cscroll%2F.test(overflow))%20return%20node%3B%0A%20%20%20%20%7D%0A%20%20%20%20return%20null%3B%0A%20%20%7D%0A%0A%20%20const%20sleep%20%3D%20milliseconds%20%3D%3E%20new%20Promise(resolve%20%3D%3E%20setTimeout(resolve%2C%20milliseconds))%3B%0A%20%20async%20function%20collectOlder()%20%7B%0A%20%20%20%20if%20(running)%20%7B%0A%20%20%20%20%20%20collectionRun%2B%2B%3B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20notice%20%3D%20'Stopped.%20You%20can%20download%20the%20messages%20collected%20so%20far.'%3B%0A%20%20%20%20%20%20render()%3B%0A%20%20%20%20%20%20return%3B%0A%20%20%20%20%7D%0A%20%20%20%20scan()%3B%0A%20%20%20%20if%20(captured.size%20%3E%3D%20target%20%7C%7C%20!currentChannel())%20return%3B%0A%20%20%20%20running%20%3D%20true%3B%0A%20%20%20%20const%20thisRun%20%3D%20%2B%2BcollectionRun%3B%0A%20%20%20%20notice%20%3D%20'Loading%20older%20messages.%20You%20can%20stop%20at%20any%20time.'%3B%0A%20%20%20%20render()%3B%0A%20%20%20%20let%20stalled%20%3D%200%3B%0A%20%20%20%20for%20(let%20step%20%3D%200%3B%20running%20%26%26%20thisRun%20%3D%3D%3D%20collectionRun%20%26%26%20!closed%20%26%26%20currentChannel()%20%26%26%20step%20%3C%20240%3B%20step%2B%2B)%20%7B%0A%20%20%20%20%20%20const%20list%20%3D%20chatList()%3B%0A%20%20%20%20%20%20const%20scroller%20%3D%20list%20%26%26%20scrollerFor(list)%3B%0A%20%20%20%20%20%20if%20(!scroller)%20%7B%0A%20%20%20%20%20%20%20%20notice%20%3D%20'Scroll%20upward%20in%20the%20chat%20to%20load%20messages.%20They%20will%20be%20captured%20as%20they%20appear.'%3B%0A%20%20%20%20%20%20%20%20break%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20const%20beforeCount%20%3D%20captured.size%3B%0A%20%20%20%20%20%20const%20beforeTop%20%3D%20scroller.scrollTop%3B%0A%20%20%20%20%20%20scroller.scrollBy(%7B%20top%3A%20-Math.max(250%2C%20scroller.clientHeight%20*%200.7)%2C%20behavior%3A%20'instant'%20%7D)%3B%0A%20%20%20%20%20%20await%20sleep(950)%3B%0A%20%20%20%20%20%20if%20(thisRun%20!%3D%3D%20collectionRun)%20return%3B%0A%20%20%20%20%20%20if%20(!running%20%7C%7C%20closed%20%7C%7C%20!currentChannel())%20break%3B%0A%20%20%20%20%20%20scan()%3B%0A%20%20%20%20%20%20if%20(captured.size%20!%3D%3D%20beforeCount%20%7C%7C%20Math.abs(scroller.scrollTop%20-%20beforeTop)%20%3E%201)%20stalled%20%3D%200%3B%0A%20%20%20%20%20%20else%20stalled%2B%2B%3B%0A%20%20%20%20%20%20if%20(stalled%20%3E%3D%208)%20%7B%0A%20%20%20%20%20%20%20%20notice%20%3D%20%60Stopped%20at%20%24%7Bcaptured.size%7D%20messages.%20No%20older%20messages%20loaded%3B%20try%20scrolling%20upward%20manually.%60%3B%0A%20%20%20%20%20%20%20%20break%3B%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20if%20(running)%20%7B%0A%20%20%20%20%20%20notice%20%3D%20captured.size%20%3E%3D%20target%20%3F%20%60Captured%20%24%7Bcaptured.size%7D%20messages.%20Ready%20to%20download.%60%20%3A%20notice%3B%0A%20%20%20%20%20%20if%20(notice.startsWith('Loading%20older'))%20notice%20%3D%20'Collection%20paused.%20Download%20what%20was%20captured%20or%20continue%20scrolling%20upward.'%3B%0A%20%20%20%20%7D%0A%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20render()%3B%0A%20%20%7D%0A%0A%20%20function%20packageData()%20%7B%0A%20%20%20%20scan()%3B%0A%20%20%20%20const%20messages%20%3D%20ordered()%3B%0A%20%20%20%20return%20%7B%0A%20%20%20%20%20%20channel%3A%20%7B%20title%3A%20channelTitle%2C%20type%3A%20isDM%20%3F%20'dm'%20%3A%20'server_channel'%2C%20guild_id%3A%20guildId%2C%20channel_id%3A%20channelId%2C%20url%3A%20channelUrl%20%7D%2C%0A%20%20%20%20%20%20exported_at%3A%20new%20Date().toISOString()%2C%0A%20%20%20%20%20%20requested_messages%3A%20target%2C%0A%20%20%20%20%20%20captured_messages%3A%20messages.length%2C%0A%20%20%20%20%20%20target_reached%3A%20messages.length%20%3E%3D%20target%2C%0A%20%20%20%20%20%20scope%3A%20'Messages%20rendered%20by%20the%20Discord%20web%20app%20at%20or%20before%20the%20newest%20message%20loaded%20when%20capture%20started.%20This%20is%20not%20proof%20of%20complete%20conversation%20history.'%2C%0A%20%20%20%20%20%20notes%3A%20'Attachments%20are%20links%2C%20not%20downloaded%20files.%20Deleted%2C%20inaccessible%2C%20and%20unloaded%20messages%20are%20not%20available.%20Review%20unknown%20authors%20and%20blank%20messages.'%2C%0A%20%20%20%20%20%20messages%0A%20%20%20%20%7D%3B%0A%20%20%7D%0A%0A%20%20function%20transcript()%20%7B%0A%20%20%20%20const%20data%20%3D%20packageData()%3B%0A%20%20%20%20const%20header%20%3D%20%5Bdata.channel.title%2C%20data.channel.url%2C%0A%20%20%20%20%20%20%60Exported%3A%20%24%7Bdata.exported_at%7D%60%2C%20%60Captured%3A%20%24%7Bdata.captured_messages%7D%20%2F%20%24%7Bdata.requested_messages%7D%20requested%20messages%60%2C%0A%20%20%20%20%20%20data.scope%2C%20data.notes%5D.join('%5Cn')%3B%0A%20%20%20%20const%20body%20%3D%20data.messages.map(message%20%3D%3E%20%5B%0A%20%20%20%20%20%20%60%5B%24%7Bmessage.timestamp%7D%5D%20%24%7Bmessage.author%7D%60%2C%0A%20%20%20%20%20%20message.text%2C%0A%20%20%20%20%20%20...message.embeds.map(embed%20%3D%3E%20%60Embed%3A%5Cn%24%7Bembed%7D%60)%2C%0A%20%20%20%20%20%20...message.attachments.map(link%20%3D%3E%20%60Attachment%3A%20%24%7Blink%7D%60)%2C%0A%20%20%20%20%20%20message.note%20%7C%7C%20''%2C%0A%20%20%20%20%20%20message.url%0A%20%20%20%20%5D.filter(Boolean).join('%5Cn')).join('%5Cn%5Cn')%3B%0A%20%20%20%20return%20%60%24%7Bheader%7D%5Cn%5Cn%24%7Bbody%7D%5Cn%60%3B%0A%20%20%7D%0A%0A%20%20function%20download(content%2C%20extension%2C%20mime)%20%7B%0A%20%20%20%20const%20url%20%3D%20URL.createObjectURL(new%20Blob(%5Bcontent%5D%2C%20%7B%20type%3A%20mime%20%7D))%3B%0A%20%20%20%20const%20link%20%3D%20document.createElement('a')%3B%0A%20%20%20%20link.href%20%3D%20url%3B%0A%20%20%20%20link.download%20%3D%20%60discord-%24%7BisDM%20%3F%20'dm'%20%3A%20'channel'%7D-%24%7BchannelId%7D-%24%7Bnew%20Date().toISOString().slice(0%2C%2010)%7D.%24%7Bextension%7D%60%3B%0A%20%20%20%20document.documentElement.append(link)%3B%0A%20%20%20%20link.click()%3B%0A%20%20%20%20link.remove()%3B%0A%20%20%20%20setTimeout(()%20%3D%3E%20URL.revokeObjectURL(url)%2C%2030000)%3B%0A%20%20%20%20notice%20%3D%20%60Download%20started.%20%24%7Bcaptured.size%7D%20messages%20in%20the%20file.%60%3B%0A%20%20%20%20render()%3B%0A%20%20%7D%0A%0A%20%20limitInput.addEventListener('change'%2C%20()%20%3D%3E%20%7B%0A%20%20%20%20target%20%3D%20Math.min(500%2C%20Math.max(1%2C%20Math.trunc(Number(limitInput.value))%20%7C%7C%20200))%3B%0A%20%20%20%20limitInput.value%20%3D%20String(target)%3B%0A%20%20%20%20trim()%3B%0A%20%20%20%20notice%20%3D%20captured.size%20%3E%3D%20target%20%3F%20'Target%20reached.%20Ready%20to%20download.'%20%3A%20'Collect%20older%20messages%20or%20scroll%20upward%20manually.'%3B%0A%20%20%20%20scan()%3B%0A%20%20%20%20render()%3B%0A%20%20%7D)%3B%0A%20%20collectButton.addEventListener('click'%2C%20()%20%3D%3E%20%7B%0A%20%20%20%20collectOlder().catch(()%20%3D%3E%20%7B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20notice%20%3D%20'Automatic%20scrolling%20stopped.%20Scroll%20upward%20manually%2C%20then%20download%20the%20captured%20messages.'%3B%0A%20%20%20%20%20%20render()%3B%0A%20%20%20%20%7D)%3B%0A%20%20%7D)%3B%0A%20%20textButton.addEventListener('click'%2C%20()%20%3D%3E%20download(transcript()%2C%20'txt'%2C%20'text%2Fplain%3Bcharset%3Dutf-8'))%3B%0A%20%20jsonButton.addEventListener('click'%2C%20()%20%3D%3E%20download(JSON.stringify(packageData()%2C%20null%2C%202)%2C%20'json'%2C%20'application%2Fjson'))%3B%0A%20%20copyButton.addEventListener('click'%2C%20async%20()%20%3D%3E%20%7B%0A%20%20%20%20try%20%7B%0A%20%20%20%20%20%20await%20navigator.clipboard.writeText(transcript())%3B%0A%20%20%20%20%20%20notice%20%3D%20'Transcript%20copied.%20Paste%20it%20into%20your%20text%20editor%20or%20another%20app.'%3B%0A%20%20%20%20%7D%20catch%20%7B%0A%20%20%20%20%20%20notice%20%3D%20'Clipboard%20access%20was%20blocked.%20Use%20Download%20.txt%20instead.'%3B%0A%20%20%20%20%7D%0A%20%20%20%20render()%3B%0A%20%20%7D)%3B%0A%0A%20%20const%20observer%20%3D%20new%20MutationObserver(()%20%3D%3E%20%7B%0A%20%20%20%20if%20(scheduled%20!%3D%3D%20null%20%7C%7C%20closed%20%7C%7C%20channelChanged)%20return%3B%0A%20%20%20%20scheduled%20%3D%20setTimeout(()%20%3D%3E%20%7B%20scheduled%20%3D%20null%3B%20scan()%3B%20%7D%2C%20100)%3B%0A%20%20%7D)%3B%0A%20%20observer.observe(document.body%2C%20%7B%20childList%3A%20true%2C%20subtree%3A%20true%2C%20characterData%3A%20true%20%7D)%3B%0A%20%20const%20timer%20%3D%20setInterval(()%20%3D%3E%20%7B%0A%20%20%20%20if%20(!currentChannel()%20%26%26%20!channelChanged)%20%7B%0A%20%20%20%20%20%20channelChanged%20%3D%20true%3B%0A%20%20%20%20%20%20collectionRun%2B%2B%3B%0A%20%20%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20%20%20observer.disconnect()%3B%0A%20%20%20%20%20%20notice%20%3D%20'Chat%20changed.%20Capture%20stopped%3B%20downloads%20still%20contain%20only%20the%20original%20chat.%20Close%20and%20run%20the%20bookmark%20again%20for%20another%20chat.'%3B%0A%20%20%20%20%20%20render()%3B%0A%20%20%20%20%7D%20else%20if%20(!channelChanged)%20scan()%3B%0A%20%20%7D%2C%201200)%3B%0A%20%20window%5Bkey%5D%20%3D%20%7B%20show%3A%20()%20%3D%3E%20%7B%20host.style.display%20%3D%20'block'%3B%20%7D%20%7D%3B%0A%20%20closeButton.addEventListener('click'%2C%20()%20%3D%3E%20%7B%0A%20%20%20%20if%20(captured.size%20%26%26%20!confirm('Close%20the%20helper%20and%20clear%20its%20captured%20messages%3F%20Download%20first%20if%20you%20want%20to%20keep%20them.'))%20return%3B%0A%20%20%20%20closed%20%3D%20true%3B%0A%20%20%20%20running%20%3D%20false%3B%0A%20%20%20%20observer.disconnect()%3B%0A%20%20%20%20clearInterval(timer)%3B%0A%20%20%20%20if%20(scheduled%20!%3D%3D%20null)%20clearTimeout(scheduled)%3B%0A%20%20%20%20captured.clear()%3B%0A%20%20%20%20host.remove()%3B%0A%20%20%20%20delete%20window%5Bkey%5D%3B%0A%20%20%7D)%3B%0A%20%20scan()%3B%0A%20%20render()%3B%0A%7D)()%3B%0A%0Avoid%200%3B</textarea>
+<p>Source code for inspection or use in the browser developer console:</p>
+<textarea readonly spellcheck="false" aria-label="Capture source code">(() =&gt; {
+  'use strict';
+
+  const key = '__discordLocalChannelCaptureV1';
+  const match = location.pathname.match(/^\/channels\/(\d+|@me)\/(\d+)\/?$/);
+  if (!['discord.com', 'canary.discord.com', 'ptb.discord.com'].includes(location.hostname) || !match) {
+    alert('Open a server channel, DM, or group DM on discord.com, then click this bookmark again.');
+    return;
+  }
+  if (window[key]) {
+    window[key].show();
+    return;
+  }
+
+  const path = location.pathname;
+  const guildSegment = match[1];
+  const isDM = guildSegment === '@me';
+  const guildId = isDM ? null : guildSegment;
+  const channelId = match[2];
+  const channelUrl = `https://discord.com/channels/${guildSegment}/${channelId}`;
+  const channelTitle = document.title.replace(/^\(\d+\)\s*/, '').replace(/\s*\|\s*Discord$/, '');
+  const captured = new Map();
+  let anchorId = null;
+  let target = 200;
+  let running = false;
+  let collectionRun = 0;
+  let closed = false;
+  let channelChanged = false;
+  let notice = 'Start at the bottom of the chat, then collect older messages.';
+  let scheduled = null;
+
+  const host = document.createElement('div');
+  host.id = 'discord-local-capture-panel';
+  host.style.cssText = 'position:fixed;top:82px;right:20px;z-index:2147483647;width:330px;max-width:calc(100vw - 40px);color-scheme:dark;';
+  const shadow = host.attachShadow({ mode: 'open' });
+  const style = document.createElement('style');
+  style.textContent = `
+    :host{all:initial;color-scheme:dark} *{box-sizing:border-box}
+    section{font:14px/1.45 system-ui,sans-serif;background:#20232b;color:#f3f4f7;border:1px solid #565d6d;border-radius:12px;padding:18px;box-shadow:0 12px 42px #0009}
+    h2{font-size:17px;line-height:1.3;margin:0 0 5px} p{margin:8px 0;color:#c7cbd5}
+    .channel{font-size:12px;overflow-wrap:anywhere;margin-bottom:12px}
+    label{display:flex;align-items:center;gap:8px;margin:12px 0}
+    input{width:76px;padding:5px;border:1px solid #777f90;border-radius:5px;background:#13161c;color:#fff;font:inherit}
+    output{display:block;font-size:24px;font-weight:700;margin:10px 0 0}
+    .status{font-size:12px;min-height:36px;white-space:pre-line}
+    button{font:600 13px system-ui;cursor:pointer;background:#3c4352;color:#fff;border:1px solid #687286;border-radius:6px;padding:9px 10px}
+    button:disabled{opacity:.5;cursor:default} button:hover:enabled{filter:brightness(1.18)}
+    .primary{width:100%;background:#4757c4;border-color:#7381e6;margin:6px 0 10px}
+    .buttons{display:flex;gap:6px;flex-wrap:wrap}.foot{font-size:11px;margin:12px 0}
+    .close{background:transparent;width:100%;padding:5px;color:#c7cbd5}
+  `;
+  shadow.append(style);
+  const panel = document.createElement('section');
+  shadow.append(panel);
+  const element = (tag, text, className) =&gt; {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (className) node.className = className;
+    return node;
+  };
+  panel.append(element('h2', isDM ? 'Capture this DM' : 'Capture this channel'));
+  panel.append(element('p', channelTitle || `${isDM ? 'DM' : 'Channel'} ${channelId}`, 'channel'));
+  const label = element('label', 'Messages to keep');
+  const limitInput = document.createElement('input');
+  limitInput.type = 'number';
+  limitInput.min = '1';
+  limitInput.max = '500';
+  limitInput.value = String(target);
+  label.append(limitInput);
+  panel.append(label);
+  const count = element('output', '0 / 200');
+  const status = element('p', notice, 'status');
+  status.setAttribute('role', 'status');
+  panel.append(count, status);
+  const collectButton = element('button', 'Collect older messages', 'primary');
+  collectButton.type = 'button';
+  const actions = element('div', undefined, 'buttons');
+  const textButton = element('button', 'Download .txt');
+  const jsonButton = element('button', 'Download .json');
+  const copyButton = element('button', 'Copy text');
+  for (const button of [textButton, jsonButton, copyButton]) {
+    button.type = 'button';
+    actions.append(button);
+  }
+  const closeButton = element('button', 'Close and clear capture', 'close');
+  closeButton.type = 'button';
+  panel.append(collectButton, actions,
+    element('p', 'Captures the loaded chat. Files and media are saved as links. Download before refreshing or leaving this tab.', 'foot'), closeButton);
+  document.documentElement.append(host);
+
+  const compareIds = (a, b) =&gt; BigInt(a) &lt; BigInt(b) ? -1 : BigInt(a) &gt; BigInt(b) ? 1 : 0;
+  const ordered = () =&gt; Array.from(captured.values()).sort((a, b) =&gt; compareIds(a.id, b.id));
+  const unknown = 'Unknown author (header not loaded)';
+  const currentChannel = () =&gt; location.pathname === path;
+
+  function render() {
+    count.textContent = `${captured.size} / ${target}`;
+    status.textContent = notice;
+    collectButton.textContent = running ? 'Stop collecting' : captured.size &gt;= target ? 'Target reached' : 'Collect older messages';
+    collectButton.disabled = channelChanged || (!running &amp;&amp; captured.size &gt;= target);
+    limitInput.disabled = running || channelChanged;
+    for (const button of [textButton, jsonButton, copyButton]) button.disabled = !captured.size;
+  }
+
+  function textOf(node) {
+    if (!node) return '';
+    const blocks = new Set(['DIV', 'P', 'PRE', 'BLOCKQUOTE', 'LI', 'H1', 'H2', 'H3', 'H4']);
+    function walk(part) {
+      if (part.nodeType === Node.TEXT_NODE) return part.textContent;
+      if (part.nodeType !== Node.ELEMENT_NODE || part.hidden || part.getAttribute('aria-hidden') === 'true') return '';
+      if (['SCRIPT', 'STYLE', 'BUTTON'].includes(part.tagName)) return '';
+      if (part.tagName === 'BR') return '\n';
+      if (part.tagName === 'IMG') return part.getAttribute('alt') || '';
+      const content = Array.from(part.childNodes, walk).join('');
+      return blocks.has(part.tagName) ? `\n${content}\n` : content;
+    }
+    return walk(node).replace(/\u200b/g, '').replace(/\u00a0/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  function messageId(row) {
+    const parts = row.id.match(/^chat-messages-(?:(\d+)-)?(\d+)$/);
+    return parts &amp;&amp; (!parts[1] || parts[1] === channelId) ? parts[2] : null;
+  }
+
+  function chatList() {
+    for (const list of document.querySelectorAll('[data-list-id=&quot;chat-messages&quot;]')) {
+      if (Array.from(list.querySelectorAll('[id^=&quot;chat-messages-&quot;]')).some(row =&gt; messageId(row))) return list;
+    }
+    for (const row of document.querySelectorAll('li[id^=&quot;chat-messages-&quot;]')) {
+      if (messageId(row)) return row.closest('ol,[role=&quot;log&quot;],[role=&quot;list&quot;]') || row.parentElement;
+    }
+    return null;
+  }
+
+  function trim() {
+    const entries = ordered();
+    for (const entry of entries.slice(0, Math.max(0, entries.length - target))) captured.delete(entry.id);
+  }
+
+  function scan() {
+    if (closed || !currentChannel() || channelChanged) return;
+    const list = chatList();
+    if (!list) return;
+    const rows = Array.from(list.querySelectorAll('[id^=&quot;chat-messages-&quot;]'))
+      .map(row =&gt; ({ row, id: messageId(row) })).filter(item =&gt; item.id)
+      .sort((a, b) =&gt; compareIds(a.id, b.id));
+    if (!rows.length) return;
+    if (anchorId === null) anchorId = rows[rows.length - 1].id;
+    let previousAuthor = null;
+    for (const { row, id } of rows) {
+      const content = row.querySelector(`[id=&quot;message-content-${id}&quot;]`);
+      const username = row.querySelector(`[id=&quot;message-username-${id}&quot;]`)
+        || row.querySelector('h3 [class*=&quot;username&quot;]');
+      const explicitAuthor = textOf(username &amp;&amp; (username.querySelector('[class*=&quot;username&quot;]') || username));
+      const existing = captured.get(id);
+      let author = explicitAuthor || (existing &amp;&amp; existing.author !== unknown ? existing.author : null) || previousAuthor || unknown;
+      const system = !content &amp;&amp; !username &amp;&amp; !!row.querySelector('[class*=&quot;systemMessage&quot;],[class*=&quot;systemMessageContent&quot;]');
+      if (system) author = 'System';
+      previousAuthor = system ? null : author === unknown ? null : author;
+      if (compareIds(id, anchorId) &gt; 0) continue;
+      const time = row.querySelector('time[datetime]');
+      const timestamp = time ? time.getAttribute('datetime') : new Date(Number((BigInt(id) &gt;&gt; 22n) + 1420070400000n)).toISOString();
+      const text = textOf(content) || (system ? textOf(row.querySelector('[class*=&quot;systemMessageContent&quot;]') || row) : '');
+      const embedSelector = '[class*=&quot;embedWrapper&quot;],[class*=&quot;embedFull&quot;]';
+      const embeds = Array.from(row.querySelectorAll(embedSelector))
+        .filter(node =&gt; !node.parentElement.closest(embedSelector) &amp;&amp; !node.closest('[class*=&quot;repliedMessage&quot;]'))
+        .map(textOf).filter(Boolean);
+      const attachments = new Set();
+      for (const node of row.querySelectorAll('a[href],img[src],video[src],audio[src],source[src]')) {
+        if (node.closest('[class*=&quot;repliedMessage&quot;]')) continue;
+        const link = node.getAttribute('href') || node.getAttribute('src');
+        if (!link) continue;
+        try {
+          const url = new URL(link, location.origin);
+          if (['cdn.discordapp.com', 'media.discordapp.net', 'cdn.discord.com'].includes(url.hostname)
+              &amp;&amp; /^\/(attachments|ephemeral-attachments|stickers)\//.test(url.pathname)) attachments.add(url.href);
+        } catch { /* Ignore malformed non-message URLs. */ }
+      }
+      captured.set(id, {
+        id, author, timestamp, text,
+        embeds: Array.from(new Set(embeds)), attachments: Array.from(attachments),
+        url: `${channelUrl}/${id}`,
+        ...(text || embeds.length || attachments.size ? {} : { note: 'No readable text or attachment link was found for this message.' })
+      });
+    }
+    trim();
+    if (captured.size &gt;= target &amp;&amp; running) {
+      running = false;
+      notice = `Captured ${captured.size} messages. Ready to download.`;
+    }
+    render();
+  }
+
+  function scrollerFor(list) {
+    for (let node = list; node &amp;&amp; node !== document.documentElement; node = node.parentElement) {
+      const overflow = getComputedStyle(node).overflowY;
+      if (node.clientHeight &gt; 0 &amp;&amp; node.scrollHeight &gt; node.clientHeight + 5 &amp;&amp; /auto|scroll/.test(overflow)) return node;
+    }
+    return null;
+  }
+
+  const sleep = milliseconds =&gt; new Promise(resolve =&gt; setTimeout(resolve, milliseconds));
+  async function collectOlder() {
+    if (running) {
+      collectionRun++;
+      running = false;
+      notice = 'Stopped. You can download the messages collected so far.';
+      render();
+      return;
+    }
+    scan();
+    if (captured.size &gt;= target || !currentChannel()) return;
+    running = true;
+    const thisRun = ++collectionRun;
+    notice = 'Loading older messages. You can stop at any time.';
+    render();
+    let stalled = 0;
+    for (let step = 0; running &amp;&amp; thisRun === collectionRun &amp;&amp; !closed &amp;&amp; currentChannel() &amp;&amp; step &lt; 240; step++) {
+      const list = chatList();
+      const scroller = list &amp;&amp; scrollerFor(list);
+      if (!scroller) {
+        notice = 'Scroll upward in the chat to load messages. They will be captured as they appear.';
+        break;
+      }
+      const beforeCount = captured.size;
+      const beforeTop = scroller.scrollTop;
+      scroller.scrollBy({ top: -Math.max(250, scroller.clientHeight * 0.7), behavior: 'instant' });
+      await sleep(950);
+      if (thisRun !== collectionRun) return;
+      if (!running || closed || !currentChannel()) break;
+      scan();
+      if (captured.size !== beforeCount || Math.abs(scroller.scrollTop - beforeTop) &gt; 1) stalled = 0;
+      else stalled++;
+      if (stalled &gt;= 8) {
+        notice = `Stopped at ${captured.size} messages. No older messages loaded; try scrolling upward manually.`;
+        break;
+      }
+    }
+    if (running) {
+      notice = captured.size &gt;= target ? `Captured ${captured.size} messages. Ready to download.` : notice;
+      if (notice.startsWith('Loading older')) notice = 'Collection paused. Download what was captured or continue scrolling upward.';
+    }
+    running = false;
+    render();
+  }
+
+  function packageData() {
+    scan();
+    const messages = ordered();
+    return {
+      channel: { title: channelTitle, type: isDM ? 'dm' : 'server_channel', guild_id: guildId, channel_id: channelId, url: channelUrl },
+      exported_at: new Date().toISOString(),
+      requested_messages: target,
+      captured_messages: messages.length,
+      target_reached: messages.length &gt;= target,
+      scope: 'Messages rendered by the Discord web app at or before the newest message loaded when capture started. This is not proof of complete conversation history.',
+      notes: 'Attachments are links, not downloaded files. Deleted, inaccessible, and unloaded messages are not available. Review unknown authors and blank messages.',
+      messages
+    };
+  }
+
+  function transcript() {
+    const data = packageData();
+    const header = [data.channel.title, data.channel.url,
+      `Exported: ${data.exported_at}`, `Captured: ${data.captured_messages} / ${data.requested_messages} requested messages`,
+      data.scope, data.notes].join('\n');
+    const body = data.messages.map(message =&gt; [
+      `[${message.timestamp}] ${message.author}`,
+      message.text,
+      ...message.embeds.map(embed =&gt; `Embed:\n${embed}`),
+      ...message.attachments.map(link =&gt; `Attachment: ${link}`),
+      message.note || '',
+      message.url
+    ].filter(Boolean).join('\n')).join('\n\n');
+    return `${header}\n\n${body}\n`;
+  }
+
+  function download(content, extension, mime) {
+    const url = URL.createObjectURL(new Blob([content], { type: mime }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `discord-${isDM ? 'dm' : 'channel'}-${channelId}-${new Date().toISOString().slice(0, 10)}.${extension}`;
+    document.documentElement.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() =&gt; URL.revokeObjectURL(url), 30000);
+    notice = `Download started. ${captured.size} messages in the file.`;
+    render();
+  }
+
+  limitInput.addEventListener('change', () =&gt; {
+    target = Math.min(500, Math.max(1, Math.trunc(Number(limitInput.value)) || 200));
+    limitInput.value = String(target);
+    trim();
+    notice = captured.size &gt;= target ? 'Target reached. Ready to download.' : 'Collect older messages or scroll upward manually.';
+    scan();
+    render();
+  });
+  collectButton.addEventListener('click', () =&gt; {
+    collectOlder().catch(() =&gt; {
+      running = false;
+      notice = 'Automatic scrolling stopped. Scroll upward manually, then download the captured messages.';
+      render();
+    });
+  });
+  textButton.addEventListener('click', () =&gt; download(transcript(), 'txt', 'text/plain;charset=utf-8'));
+  jsonButton.addEventListener('click', () =&gt; download(JSON.stringify(packageData(), null, 2), 'json', 'application/json'));
+  copyButton.addEventListener('click', async () =&gt; {
+    try {
+      await navigator.clipboard.writeText(transcript());
+      notice = 'Transcript copied. Paste it into your text editor or another app.';
+    } catch {
+      notice = 'Clipboard access was blocked. Use Download .txt instead.';
+    }
+    render();
+  });
+
+  const observer = new MutationObserver(() =&gt; {
+    if (scheduled !== null || closed || channelChanged) return;
+    scheduled = setTimeout(() =&gt; { scheduled = null; scan(); }, 100);
+  });
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+  const timer = setInterval(() =&gt; {
+    if (!currentChannel() &amp;&amp; !channelChanged) {
+      channelChanged = true;
+      collectionRun++;
+      running = false;
+      observer.disconnect();
+      notice = 'Chat changed. Capture stopped; downloads still contain only the original chat. Close and run the bookmark again for another chat.';
+      render();
+    } else if (!channelChanged) scan();
+  }, 1200);
+  window[key] = { show: () =&gt; { host.style.display = 'block'; } };
+  closeButton.addEventListener('click', () =&gt; {
+    if (captured.size &amp;&amp; !confirm('Close the helper and clear its captured messages? Download first if you want to keep them.')) return;
+    closed = true;
+    running = false;
+    observer.disconnect();
+    clearInterval(timer);
+    if (scheduled !== null) clearTimeout(scheduled);
+    captured.clear();
+    host.remove();
+    delete window[key];
+  });
+  scan();
+  render();
+})();
+</textarea>
+</details>
+</main><script>
+document.getElementById('copy-bookmark').addEventListener('click',async()=>{
+  const field=document.getElementById('bookmark-url');
+  try{await navigator.clipboard.writeText(field.value);document.getElementById('feedback').textContent='Copied. Paste this into the bookmark URL field.';}
+  catch{field.focus();field.select();document.getElementById('feedback').textContent='Press Ctrl + C to copy the selected bookmark URL.';}
+});
+</script></body></html>

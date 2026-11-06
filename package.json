@@ -1,0 +1,19 @@
+{
+  "name": "discord-channel-capture",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A local browser bookmarklet that saves loaded Discord channel, DM, and group DM messages as TXT or JSON.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build-setup.cjs",
+    "test": "node verify.cjs",
+    "check": "node --check capture.js && node --check build-setup.cjs && node --check verify.cjs && npm run build && npm test",
+    "screenshot": "npm run build && node verify.cjs --screenshot"
+  },
+  "devDependencies": {
+    "playwright-core": "1.58.2"
+  }
+}
